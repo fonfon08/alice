@@ -1,0 +1,65 @@
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# server runtime
+server/logs/*.log
+server/logs/*.log.*
+server/infra/database/database.db
+server/infra/database/database.db-*
+server/infra/tmp/*
+!server/infra/tmp/.gitkeep
+server/infra/builds/*
+!server/infra/builds/.gitkeep
+server/infra/certs/*
+!server/infra/certs/.gitkeep
+server/infra/reports/*
+!server/infra/reports/.gitkeep
+server/infra/listeners/file_server/routes/content/*
+!server/infra/listeners/file_server/routes/content/.gitkeep
+server/*.key
+server/server.conf
+
+# client
+client/gui/node_modules/
+client/gui/dist/
+client/gui/out/
+client/gui/.electron-vite/
+client/gui/config.json
+client/gui/downloads.json
+client/app/
+
+# implants build output
+implants/**/nimcache*/
+implants/**/*.o
+implants/**/*.obj
+implants/**/*.exe
+implants/**/*.dll
+implants/**/*.so
+implants/**/*.dylib
+implants/**/*.nim.c
+implants/**/*.nim.c.o
+implants/**/main
+
+# installer and toolchain
+toolchain/
+install-server.log
+install-toolchain.log
+install-start.ok
+
+# infra/bin build output
+server/infra/bin/encoders/sgn/target/
+server/infra/bin/encoders/sgn/debug/
+server/infra/bin/encoders/sgn/test/
+server/infra/bin/encoders/sgn/sgn
+server/infra/bin/encoders/**/target/
+server/infra/bin/encoders/**/debug/
+server/infra/bin/encoders/**/test/
+
+# misc
+.DS_Store
+Thumbs.db
+*.log
