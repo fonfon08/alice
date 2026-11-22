@@ -34,7 +34,7 @@ The key is saved to `server\operator.key`. The console connects to `http://127.0
 |------|---------|
 | 9000 | Team server API and client authentication |
 | 8443 | Default HTTP listener |
-| 8000 | MCP HTTP server (optional) |
+| 9100 | MCP HTTP server (optional) |
 
 Listeners can bind any port. Open the callback port you pick in the firewall.
 
