@@ -31,6 +31,21 @@ gcc_env = {
     "i686-w64-mingw32-gcc": "MINGW32_GCC",
 }
 
+
+def toolchain_root():
+    # Prefers a toolchain path without spaces: gcc mangles its manifest path under "Program Files"
+    repo_root = Path(__file__).resolve().parents[8]
+    candidates = [
+        repo_root / "toolchain",
+        Path(r"C:\alice\toolchain"),
+        Path(os.environ.get("ProgramData", r"C:\ProgramData")) / "ALICE" / "toolchain",
+    ]
+    existing = [candidate for candidate in candidates if candidate.is_dir()]
+    for candidate in existing:
+        if " " not in str(candidate):
+            return candidate
+    return existing[0] if existing else None
+
 output_names = {
     "so": "main.so",
     "elf": "main",
@@ -44,14 +59,29 @@ def resolve_gcc(name):
     if env_key:
         env_bin = os.environ.get(env_key, "").strip()
         if env_bin and os.path.isfile(env_bin) and os.access(env_bin, os.X_OK):
+            if " " not in env_bin:
+                return env_bin
+            root = toolchain_root()
+            if root:
+                candidate = root / "mingw64" / "bin" / Path(env_bin).name
+                if candidate.is_file() and os.access(candidate, os.X_OK):
+                    return str(candidate)
             return env_bin
 
     found = shutil.which(name)
-    if found:
+    if found and " " not in found:
         return found
 
-    for base in (Path(r"C:\alice\toolchain\mingw64\bin"),
-                 Path(__file__).resolve().parents[8] / "toolchain" / "mingw64" / "bin"):
+    roots = []
+    root = toolchain_root()
+    if root:
+        roots.append(root)
+    roots += [
+        Path(r"C:\alice\toolchain"),
+        Path(__file__).resolve().parents[8] / "toolchain",
+    ]
+    for base_root in roots:
+        base = base_root / "mingw64" / "bin"
         for candidate in (base / name, base / (name + ".exe")):
             if candidate.is_file() and os.access(candidate, os.X_OK):
                 return str(candidate)
@@ -132,8 +162,10 @@ def nim_bin():
         if candidate.is_file() and os.access(candidate, os.X_OK):
             return str(candidate)
 
-    repo_root = Path(__file__).resolve().parents[8]
-    for base in (repo_root / "toolchain", Path(r"C:\alice\toolchain")):
+    root = toolchain_root()
+    bases = [root] if root else []
+    bases.append(Path(r"C:\alice\toolchain"))
+    for base in bases:
         for candidate in sorted(base.glob("nim-*/bin/nim.exe"), reverse=True):
             if candidate.is_file():
                 return str(candidate)
@@ -265,11 +297,8 @@ async def build(config, body, path=None, icon_obj=None):
         args = create_syntax_for_sandbox_build(args, path)
 
     env = os.environ.copy()
-    repo_root = Path(__file__).resolve().parents[8]
-    toolchain = repo_root / "toolchain"
-    if not toolchain.is_dir():
-        toolchain = Path(r"C:\alice\toolchain")
-    if toolchain.is_dir():
+    toolchain = toolchain_root()
+    if toolchain and toolchain.is_dir():
         paths = [str(toolchain / "mingw64" / "bin")]
         for nim_dir in sorted(toolchain.glob("nim-*"), reverse=True):
             candidate = nim_dir / "bin"
@@ -279,10 +308,10 @@ async def build(config, body, path=None, icon_obj=None):
         env["PATH"] = os.pathsep.join(paths + [env.get("PATH", "")])
         gcc_env_path = toolchain / "mingw64" / "bin" / "x86_64-w64-mingw32-gcc.exe"
         if gcc_env_path.is_file():
-            env.setdefault("MINGW64_GCC", str(gcc_env_path))
+            env["MINGW64_GCC"] = str(gcc_env_path)
         nim_env_path = Path(paths[-1]) / "nim.exe"
         if nim_env_path.is_file():
-            env.setdefault("NIM_BIN", str(nim_env_path))
+            env["NIM_BIN"] = str(nim_env_path)
 
     proc = await asyncio.create_subprocess_exec(
         *args,

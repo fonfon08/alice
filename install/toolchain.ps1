@@ -6,7 +6,15 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
 $toolchain = Join-Path $Root "toolchain"
+if ($Root -match '\s') {
+    # gcc cannot link from a path with spaces; install under ProgramData and link it back
+    $toolchain = Join-Path $env:ProgramData "ALICE\toolchain"
+}
 New-Item -ItemType Directory -Force -Path $toolchain | Out-Null
+
+if ($Root -match '\s' -and -not (Test-Path (Join-Path $Root "toolchain"))) {
+    cmd /c mklink /J "$Root\toolchain" "$toolchain" | Out-Null
+}
 
 $nimVersion = "2.4.2"
 $mingwUrl = "https://github.com/brechtsanders/winlibs_mingw/releases/download/16.2.0posix-23.1.3-14.0.0-ucrt-r3/winlibs-x86_64-posix-seh-gcc-16.2.0-mingw-w64ucrt-14.0.0-r3.zip"

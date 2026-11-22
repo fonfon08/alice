@@ -92,14 +92,19 @@ def server_env():
     env["PYTHONPATH"] = os.pathsep.join([str(server_root), str(server_root / "core")])
     env["PYTHONUNBUFFERED"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
-    if toolchain.is_dir():
-        paths = [str(toolchain / "mingw64" / "bin")]
-        for nim_dir in sorted(toolchain.glob("nim-*"), reverse=True):
+    active_toolchain = toolchain
+    if " " in str(active_toolchain):
+        alternate = Path(os.environ.get("ProgramData", r"C:\ProgramData")) / "ALICE" / "toolchain"
+        if alternate.is_dir():
+            active_toolchain = alternate
+    if active_toolchain.is_dir():
+        paths = [str(active_toolchain / "mingw64" / "bin")]
+        for nim_dir in sorted(active_toolchain.glob("nim-*"), reverse=True):
             if (nim_dir / "bin").is_dir():
                 paths.append(str(nim_dir / "bin"))
                 break
         env["PATH"] = os.pathsep.join(paths + [env.get("PATH", "")])
-        gcc = toolchain / "mingw64" / "bin" / "x86_64-w64-mingw32-gcc.exe"
+        gcc = active_toolchain / "mingw64" / "bin" / "x86_64-w64-mingw32-gcc.exe"
         if gcc.is_file():
             env.setdefault("MINGW64_GCC", str(gcc))
     return env

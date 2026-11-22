@@ -201,5 +201,8 @@ Section "Uninstall"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ALICE"
   DeleteRegKey HKLM "Software\ALICE"
 
+  RMDir /r "$COMMONAPPDATA\ALICE\toolchain"
+  RMDir "$COMMONAPPDATA\ALICE"
+
   RMDir /r "$INSTDIR"
 SectionEnd
